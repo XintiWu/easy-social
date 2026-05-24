@@ -72,6 +72,11 @@ a:hover {
   display: grid;
   gap: 24px;
   justify-content: center;
+  width: 100%;
+}
+
+.layout:not(.with-sidebar) {
+  grid-template-columns: minmax(0, 680px);
 }
 
 .layout.with-sidebar {
@@ -117,10 +122,39 @@ h2 {
 }
 
 .form-stack,
-.composer,
 .comment-form {
   display: grid;
   gap: 14px;
+}
+
+.captcha-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.captcha-row img {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  display: block;
+}
+
+button.secondary-button {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 10px 14px;
+}
+
+button.secondary-button:hover {
+  background: var(--surface);
+  border-color: var(--accent);
+  color: var(--accent-strong);
 }
 
 label {
@@ -180,8 +214,44 @@ button.secondary {
 }
 
 .composer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   margin-bottom: 18px;
-  padding: 16px;
+  padding: 20px 22px;
+}
+
+.composer-body {
+  display: block;
+  width: 100%;
+}
+
+.composer textarea,
+.composer-input {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-sizing: border-box;
+  display: block;
+  font-size: 1rem;
+  line-height: 1.55;
+  min-height: 200px;
+  padding: 16px 18px;
+  resize: vertical;
+  width: 100%;
+}
+
+.composer-actions {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.composer-actions button[type="submit"] {
+  flex-shrink: 0;
+  min-width: 76px;
+  padding: 8px 20px;
 }
 
 .composer-preview {
@@ -227,7 +297,6 @@ button.secondary {
   white-space: nowrap;
 }
 
-.composer-actions,
 .post-actions,
 .profile-header,
 .user-row {
@@ -377,9 +446,13 @@ button.secondary {
     padding: 20px 14px;
   }
 
-  .composer-actions,
   .profile-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .composer-actions {
+    align-items: center;
+    flex-direction: row;
   }
 }

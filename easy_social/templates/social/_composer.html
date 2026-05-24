@@ -1,5 +1,13 @@
 <form method="post" action="{{ url_for('social.create_post') }}" enctype="multipart/form-data" class="composer">
-  <textarea name="body" rows="4" maxlength="2000" placeholder="What is happening?"></textarea>
+  <div class="composer-body">
+    <textarea
+      class="composer-input"
+      name="body"
+      rows="6"
+      maxlength="2000"
+      placeholder="What is happening?"
+    ></textarea>
+  </div>
   <div class="composer-preview" data-media-preview hidden>
     <div class="composer-preview-frame" data-media-preview-frame></div>
     <div class="composer-preview-meta">

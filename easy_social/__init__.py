@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from flask import Flask
+from flask import Flask, redirect, url_for
 from sqlalchemy.pool import NullPool
 
 from .extensions import db, login_manager, migrate
@@ -75,6 +75,7 @@ def create_app(test_config: dict | None = None) -> Flask:
         SUPABASE_URL=os.environ.get("SUPABASE_URL"),
         SUPABASE_SERVICE_ROLE_KEY=os.environ.get("SUPABASE_SERVICE_ROLE_KEY"),
         SUPABASE_STORAGE_BUCKET=os.environ.get("SUPABASE_STORAGE_BUCKET", "easy-social-media"),
+        APP_DISPLAY_NAME=os.environ.get("APP_DISPLAY_NAME", "Easy Social"),
     )
 
     if test_config:
@@ -104,6 +105,19 @@ def create_app(test_config: dict | None = None) -> Flask:
     app.register_blueprint(auth_bp)
     app.register_blueprint(social_bp)
     app.jinja_env.globals["media_url"] = media_url
+    app.jinja_env.globals["app_display_name"] = app.config["APP_DISPLAY_NAME"]
+
+    static_root = Path(app.root_path) / "static"
+    css_path = static_root / "css" / "app.css"
+    js_path = static_root / "js" / "app.js"
+    app.jinja_env.globals["static_asset_version"] = max(
+        int(css_path.stat().st_mtime) if css_path.exists() else 0,
+        int(js_path.stat().st_mtime) if js_path.exists() else 0,
+    )
+
+    @app.route("/register")
+    def register_shortcut():
+        return redirect(url_for("auth.register"))
 
     @app.cli.command("init-db")
     def init_db_command() -> None:
