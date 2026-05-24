@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from easy_social import create_app
+from easy_social.captcha import TESTING_CAPTCHA_ANSWER
 from easy_social.extensions import db
 
 
@@ -32,13 +33,21 @@ def client(app):
     return app.test_client()
 
 
-def register(client, username: str, email: str | None = None, password: str = "password"):
+def register(
+    client,
+    username: str,
+    email: str | None = None,
+    password: str = "password",
+    captcha: str = TESTING_CAPTCHA_ANSWER,
+):
+    client.get("/auth/captcha")
     return client.post(
         "/auth/register",
         data={
             "username": username,
             "email": email or f"{username}@example.com",
             "password": password,
+            "captcha": captcha,
         },
         follow_redirects=True,
     )

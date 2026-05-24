@@ -1,12 +1,29 @@
 from __future__ import annotations
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, Response, flash, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
+from .captcha import (
+    generate_captcha_text,
+    render_captcha_image,
+    set_captcha_answer,
+    verify_and_clear_captcha,
+)
 from .extensions import db
 from .models import User
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
+
+
+@bp.route("/captcha")
+def captcha_image():
+    text = generate_captcha_text()
+    set_captcha_answer(session, text)
+    response = Response(render_captcha_image(text), mimetype="image/png")
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 @bp.route("/register", methods=["GET", "POST"])
@@ -18,12 +35,15 @@ def register():
         username = request.form.get("username", "").strip()
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
+        captcha_input = request.form.get("captcha", "").strip()
 
         error = None
         if not username or not email or not password:
             error = "Username, email, and password are required."
         elif len(username) > 40:
             error = "Username must be 40 characters or fewer."
+        elif not verify_and_clear_captcha(session, captcha_input):
+            error = "Invalid or expired verification code."
         elif User.query.filter_by(username=username).first():
             error = "That username is already taken."
         elif User.query.filter_by(email=email).first():

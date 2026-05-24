@@ -9,6 +9,7 @@ import pytest
 from werkzeug.serving import make_server
 
 from easy_social import create_app
+from easy_social.captcha import TESTING_CAPTCHA_ANSWER
 from easy_social.extensions import db
 from easy_social.models import Comment, Post, User
 
@@ -128,8 +129,35 @@ def register_via_ui(browser, live_server: str, username: str):
     set_field_value(browser, form.find_element(By.NAME, "username"), username)
     set_field_value(browser, form.find_element(By.NAME, "email"), f"{username}@example.com")
     set_field_value(browser, form.find_element(By.NAME, "password"), "password")
+    WebDriverWait(browser, 10).until(
+        EC.presence_of_element_located((By.NAME, "captcha"))
+    )
+    set_field_value(browser, form.find_element(By.NAME, "captcha"), TESTING_CAPTCHA_ANSWER)
     submit_form(browser, form)
     wait_for_feed(browser)
+
+
+@pytest.mark.ui
+def test_register_requires_valid_captcha(browser, live_server):
+    browser.get(f"{live_server}/auth/register")
+    form = WebDriverWait(browser, 10).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "form.form-stack"))
+    )
+    captcha_image = browser.find_element(By.ID, "captcha-image")
+    original_src = captcha_image.get_attribute("src")
+    refresh_button = browser.find_element(By.ID, "captcha-refresh")
+    refresh_button.click()
+    WebDriverWait(browser, 10).until(
+        lambda driver: driver.find_element(By.ID, "captcha-image").get_attribute("src") != original_src
+    )
+    set_field_value(browser, form.find_element(By.NAME, "username"), "captcha-bot")
+    set_field_value(browser, form.find_element(By.NAME, "email"), "captcha-bot@example.com")
+    set_field_value(browser, form.find_element(By.NAME, "password"), "password")
+    set_field_value(browser, form.find_element(By.NAME, "captcha"), "WRONG1")
+    submit_form(browser, form)
+
+    wait_for_text(browser, "Invalid or expired verification code.")
+    assert "/auth/register" in browser.current_url
 
 
 def logout_via_ui(browser):
