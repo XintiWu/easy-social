@@ -19,7 +19,11 @@ bp = Blueprint("auth", __name__, url_prefix="/auth")
 def captcha_image():
     text = generate_captcha_text()
     set_captcha_answer(session, text)
-    return Response(render_captcha_image(text), mimetype="image/png")
+    response = Response(render_captcha_image(text), mimetype="image/png")
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 @bp.route("/register", methods=["GET", "POST"])
@@ -38,12 +42,12 @@ def register():
             error = "Username, email, and password are required."
         elif len(username) > 40:
             error = "Username must be 40 characters or fewer."
+        elif not verify_and_clear_captcha(session, captcha_input):
+            error = "Invalid or expired verification code."
         elif User.query.filter_by(username=username).first():
             error = "That username is already taken."
         elif User.query.filter_by(email=email).first():
             error = "That email is already registered."
-        elif not verify_and_clear_captcha(session, captcha_input):
-            error = "Invalid or expired verification code."
 
         if error:
             flash(error, "error")

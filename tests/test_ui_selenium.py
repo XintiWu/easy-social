@@ -143,6 +143,13 @@ def test_register_requires_valid_captcha(browser, live_server):
     form = WebDriverWait(browser, 10).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, "form.form-stack"))
     )
+    captcha_image = browser.find_element(By.ID, "captcha-image")
+    original_src = captcha_image.get_attribute("src")
+    refresh_button = browser.find_element(By.ID, "captcha-refresh")
+    refresh_button.click()
+    WebDriverWait(browser, 10).until(
+        lambda driver: driver.find_element(By.ID, "captcha-image").get_attribute("src") != original_src
+    )
     set_field_value(browser, form.find_element(By.NAME, "username"), "captcha-bot")
     set_field_value(browser, form.find_element(By.NAME, "email"), "captcha-bot@example.com")
     set_field_value(browser, form.find_element(By.NAME, "password"), "password")

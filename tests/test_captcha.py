@@ -48,7 +48,7 @@ def test_verify_and_clear_captcha_rejects_wrong_or_missing_values():
     sess = {CAPTCHA_SESSION_KEY: "ABC123"}
 
     assert verify_and_clear_captcha(sess, "WRONG1") is False
-    assert CAPTCHA_SESSION_KEY not in sess
+    assert sess[CAPTCHA_SESSION_KEY] == "ABC123"
 
     assert verify_and_clear_captcha({}, "ABC123") is False
 

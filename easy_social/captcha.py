@@ -40,10 +40,13 @@ def set_captcha_answer(sess, text: str) -> None:
 
 
 def verify_and_clear_captcha(sess, user_input: str) -> bool:
-    expected = sess.pop(CAPTCHA_SESSION_KEY, None)
+    expected = sess.get(CAPTCHA_SESSION_KEY)
     if not expected or not user_input:
         return False
-    return user_input.strip().upper() == expected
+    if user_input.strip().upper() != expected:
+        return False
+    sess.pop(CAPTCHA_SESSION_KEY, None)
+    return True
 
 
 def _testing_mode() -> bool:
