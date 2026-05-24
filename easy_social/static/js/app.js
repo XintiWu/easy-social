@@ -41,9 +41,10 @@
     }
 
     function syncKind() {
-      const isPoll = composer.querySelector('[data-post-kind-input][value="poll"]').checked;
-      pollOptions.hidden = !isPoll;
-      mediaPicker.hidden = isPoll;
+      const pollInput = composer.querySelector('[data-post-kind-input][value="poll"]');
+      const isPoll = Boolean(pollInput && pollInput.checked);
+      pollOptions.toggleAttribute("hidden", !isPoll);
+      mediaPicker.toggleAttribute("hidden", isPoll);
       body.placeholder = isPoll ? "Ask a question (optional)" : "What is happening?";
     }
 

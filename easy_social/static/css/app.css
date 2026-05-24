@@ -444,10 +444,18 @@ button.secondary {
   font-weight: 600;
 }
 
-.composer-poll-options {
+.composer-poll-options[hidden] {
+  display: none !important;
+}
+
+.composer-poll-options:not([hidden]) {
   display: grid;
   gap: 10px;
   margin-bottom: 14px;
+}
+
+[data-composer-media-picker][hidden] {
+  display: none !important;
 }
 
 .composer-poll-hint {
