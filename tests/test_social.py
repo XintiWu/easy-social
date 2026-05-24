@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import event
 
 from easy_social.extensions import db
-from easy_social.models import Comment, Post, User
+from easy_social.models import Comment, Poll, PollOption, PollVote, Post, User
 from scripts.import_fake_data import DEFAULT_DATA_DIR, import_fake_data
 
 from conftest import login, logout, register
@@ -68,6 +68,110 @@ def test_following_adds_users_posts_to_feed(client, app):
         alice = User.query.filter_by(username="alice").one()
         bob = User.query.filter_by(username="bob").one()
         assert alice.is_following(bob)
+
+
+def test_create_poll_post_with_three_options(client, app):
+    register(client, "alice")
+
+    response = client.post(
+        "/posts",
+        data={
+            "post_kind": "poll",
+            "body": "Best fruit?",
+            "option_1": "Apple",
+            "option_2": "Banana",
+            "option_3": "Cherry",
+        },
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"Best fruit?" in response.data
+    assert b"Apple" in response.data
+    with app.app_context():
+        post = Post.query.one()
+        assert post.poll is not None
+        assert [option.label for option in post.poll.options] == ["Apple", "Banana", "Cherry"]
+
+
+def test_create_poll_rejects_one_option(client, app):
+    register(client, "alice")
+
+    response = client.post(
+        "/posts",
+        data={
+            "post_kind": "poll",
+            "body": "Only one",
+            "option_1": "Solo",
+        },
+        follow_redirects=True,
+    )
+
+    assert b"Poll posts need between 2 and 4 options." in response.data
+    with app.app_context():
+        assert Post.query.count() == 0
+
+
+def test_vote_updates_percentages_on_page(client, app):
+    register(client, "alice")
+    client.post(
+        "/posts",
+        data={
+            "post_kind": "poll",
+            "body": "Lunch?",
+            "option_1": "Pizza",
+            "option_2": "Salad",
+        },
+        follow_redirects=True,
+    )
+
+    with app.app_context():
+        post_id = Post.query.one().id
+        option_id = PollOption.query.filter_by(position=1).one().id
+
+    logout(client)
+    register(client, "bob")
+    client.post(
+        f"/posts/{post_id}/vote",
+        data={"option_id": option_id},
+        follow_redirects=True,
+    )
+
+    response = client.get(f"/posts/{post_id}")
+    assert b"100%" in response.data
+    assert b"Pizza" in response.data
+
+
+def test_cannot_vote_twice(client, app):
+    register(client, "alice")
+    client.post(
+        "/posts",
+        data={
+            "post_kind": "poll",
+            "option_1": "Yes",
+            "option_2": "No",
+        },
+        follow_redirects=True,
+    )
+
+    with app.app_context():
+        post_id = Post.query.one().id
+        options = PollOption.query.order_by(PollOption.position).all()
+
+    client.post(
+        f"/posts/{post_id}/vote",
+        data={"option_id": options[0].id},
+        follow_redirects=True,
+    )
+    response = client.post(
+        f"/posts/{post_id}/vote",
+        data={"option_id": options[1].id},
+        follow_redirects=True,
+    )
+
+    assert b"You already voted on this poll." in response.data
+    with app.app_context():
+        assert PollVote.query.count() == 1
 
 
 def test_repost_and_comment(client, app):

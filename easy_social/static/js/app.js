@@ -30,7 +30,32 @@
     }
   }
 
+  function setupComposerKind(composer) {
+    const kindInputs = composer.querySelectorAll("[data-post-kind-input]");
+    const pollOptions = composer.querySelector("[data-poll-options]");
+    const mediaActions = composer.querySelector("[data-composer-media-actions]");
+    const body = composer.querySelector("[data-composer-body]");
+
+    if (!kindInputs.length || !pollOptions || !mediaActions || !body) {
+      return;
+    }
+
+    function syncKind() {
+      const isPoll = composer.querySelector('[data-post-kind-input][value="poll"]').checked;
+      pollOptions.hidden = !isPoll;
+      mediaActions.hidden = isPoll;
+      body.placeholder = isPoll ? "Ask a question (optional)" : "What is happening?";
+    }
+
+    kindInputs.forEach(function (input) {
+      input.addEventListener("change", syncKind);
+    });
+    syncKind();
+  }
+
   function setupComposer(composer) {
+    setupComposerKind(composer);
+
     const input = composer.querySelector("[data-media-input]");
     const preview = composer.querySelector("[data-media-preview]");
     const frame = composer.querySelector("[data-media-preview-frame]");

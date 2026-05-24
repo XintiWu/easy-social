@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 import pytest
 
 from easy_social.extensions import db
-from easy_social.models import Post, User
+from easy_social.models import Poll, PollOption, PollVote, Post, User
 
 pytestmark = pytest.mark.unit
 
@@ -90,3 +90,50 @@ def test_repost_display_post_points_to_original(app):
         assert original.display_post == original
         assert repost.is_repost
         assert repost.display_post == original
+
+
+def test_poll_post_with_two_options(app):
+    with app.app_context():
+        alice = make_user("alice")
+        db.session.add(alice)
+        db.session.commit()
+
+        post = Post(author=alice, body="Favorite color?")
+        poll = Poll(post=post)
+        poll.options.append(PollOption(label="Blue", position=1))
+        poll.options.append(PollOption(label="Red", position=2))
+        db.session.add(post)
+        db.session.commit()
+
+        assert post.is_poll
+        assert len(poll.options) == 2
+        assert poll.total_votes() == 0
+
+
+def test_poll_vote_is_unique_per_user(app):
+    with app.app_context():
+        alice = make_user("alice")
+        bob = make_user("bob")
+        db.session.add_all([alice, bob])
+        db.session.commit()
+
+        post = Post(author=alice, body="Pick one")
+        poll = Poll(post=post)
+        option_a = PollOption(label="A", position=1)
+        option_b = PollOption(label="B", position=2)
+        poll.options.extend([option_a, option_b])
+        db.session.add(post)
+        db.session.commit()
+
+        db.session.add(PollVote(poll=poll, option=option_a, user=bob))
+        db.session.commit()
+        db.session.add(PollVote(poll=poll, option=option_b, user=bob))
+
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+        else:
+            raise AssertionError("duplicate poll vote should violate unique constraint")
+
+        assert poll.total_votes() == 1
