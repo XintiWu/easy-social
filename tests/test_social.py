@@ -142,6 +142,33 @@ def test_vote_updates_percentages_on_page(client, app):
     assert b"Pizza" in response.data
 
 
+def test_author_cannot_vote_on_own_poll(client, app):
+    register(client, "alice")
+    client.post(
+        "/posts",
+        data={
+            "post_kind": "poll",
+            "option_1": "A",
+            "option_2": "B",
+        },
+        follow_redirects=True,
+    )
+
+    with app.app_context():
+        post_id = Post.query.one().id
+        option_id = PollOption.query.filter_by(position=1).one().id
+
+    response = client.post(
+        f"/posts/{post_id}/vote",
+        data={"option_id": option_id},
+        follow_redirects=True,
+    )
+
+    assert b"You cannot vote on your own poll." in response.data
+    with app.app_context():
+        assert PollVote.query.count() == 0
+
+
 def test_cannot_vote_twice(client, app):
     register(client, "alice")
     client.post(
@@ -158,6 +185,8 @@ def test_cannot_vote_twice(client, app):
         post_id = Post.query.one().id
         options = PollOption.query.order_by(PollOption.position).all()
 
+    logout(client)
+    register(client, "bob")
     client.post(
         f"/posts/{post_id}/vote",
         data={"option_id": options[0].id},

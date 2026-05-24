@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from flask_login import UserMixin
-from sqlalchemy import CheckConstraint, UniqueConstraint, func
+from sqlalchemy import CheckConstraint, ForeignKeyConstraint, UniqueConstraint, func
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .extensions import db
@@ -167,6 +167,7 @@ class PollOption(db.Model):
     votes = db.relationship(
         "PollVote",
         back_populates="option",
+        foreign_keys="PollVote.option_id",
         cascade="all, delete-orphan",
         lazy="dynamic",
     )
@@ -193,11 +194,19 @@ class PollVote(db.Model):
         default=lambda: datetime.now(timezone.utc),
     )
 
-    poll = db.relationship("Poll", back_populates="votes")
-    option = db.relationship("PollOption", back_populates="votes")
+    poll = db.relationship("Poll", back_populates="votes", foreign_keys=[poll_id])
+    option = db.relationship(
+        "PollOption",
+        back_populates="votes",
+        foreign_keys=[option_id],
+    )
     user = db.relationship("User")
 
     __table_args__ = (
+        ForeignKeyConstraint(
+            ["poll_id", "option_id"],
+            ["poll_option.poll_id", "poll_option.id"],
+        ),
         UniqueConstraint("poll_id", "user_id", name="uq_poll_vote_one_per_user"),
     )
 

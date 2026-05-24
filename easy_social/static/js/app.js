@@ -33,17 +33,17 @@
   function setupComposerKind(composer) {
     const kindInputs = composer.querySelectorAll("[data-post-kind-input]");
     const pollOptions = composer.querySelector("[data-poll-options]");
-    const mediaActions = composer.querySelector("[data-composer-media-actions]");
+    const mediaPicker = composer.querySelector("[data-composer-media-picker]");
     const body = composer.querySelector("[data-composer-body]");
 
-    if (!kindInputs.length || !pollOptions || !mediaActions || !body) {
+    if (!kindInputs.length || !pollOptions || !mediaPicker || !body) {
       return;
     }
 
     function syncKind() {
       const isPoll = composer.querySelector('[data-post-kind-input][value="poll"]').checked;
       pollOptions.hidden = !isPoll;
-      mediaActions.hidden = isPoll;
+      mediaPicker.hidden = isPoll;
       body.placeholder = isPoll ? "Ask a question (optional)" : "What is happening?";
     }
 

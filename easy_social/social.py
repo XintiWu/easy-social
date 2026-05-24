@@ -224,6 +224,10 @@ def vote_post(post_id: int):
         flash("This post is not a poll.", "error")
         return redirect(request.referrer or url_for("social.feed"))
 
+    if content.author_id == current_user.id:
+        flash("You cannot vote on your own poll.", "error")
+        return redirect(request.referrer or url_for("social.post_detail", post_id=post.id))
+
     option_id = request.form.get("option_id", type=int)
     option = PollOption.query.filter_by(id=option_id, poll_id=poll.id).first()
     if option is None:
