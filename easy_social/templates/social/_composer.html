@@ -1,4 +1,14 @@
 <form method="post" action="{{ url_for('social.create_post') }}" enctype="multipart/form-data" class="composer">
+  <div class="composer-kind">
+    <label class="composer-kind-option">
+      <input type="radio" name="post_kind" value="normal" checked data-post-kind-input>
+      <span>Post</span>
+    </label>
+    <label class="composer-kind-option">
+      <input type="radio" name="post_kind" value="poll" data-post-kind-input>
+      <span>Poll</span>
+    </label>
+  </div>
   <div class="composer-body">
     <textarea
       class="composer-input"
@@ -6,7 +16,23 @@
       rows="6"
       maxlength="2000"
       placeholder="What is happening?"
+      data-composer-body
     ></textarea>
+  </div>
+  <div class="composer-poll-options" data-poll-options hidden>
+    <p class="muted composer-poll-hint">Add 2 to 4 options. Leave unused fields empty.</p>
+    {% for index in range(1, 5) %}
+      <label class="poll-option-field">
+        <span>Option {{ index }}</span>
+        <input
+          type="text"
+          name="option_{{ index }}"
+          maxlength="200"
+          placeholder="Option {{ index }}"
+          data-poll-option-input
+        >
+      </label>
+    {% endfor %}
   </div>
   <div class="composer-preview" data-media-preview hidden>
     <div class="composer-preview-frame" data-media-preview-frame></div>
@@ -15,7 +41,7 @@
       <button type="button" class="link-button" data-media-preview-clear>Remove</button>
     </div>
   </div>
-  <div class="composer-actions">
+  <div class="composer-actions" data-composer-media-actions>
     <label class="file-picker">
       <span>Attach image/video</span>
       <input type="file" name="media" accept="image/*,video/*" data-media-input>

@@ -11,7 +11,7 @@ from werkzeug.serving import make_server
 from easy_social import create_app
 from easy_social.captcha import TESTING_CAPTCHA_ANSWER
 from easy_social.extensions import db
-from easy_social.models import Comment, Post, User
+from easy_social.models import Comment, Poll, PollOption, PollVote, Post, User
 
 selenium = pytest.importorskip("selenium")
 
@@ -85,6 +85,9 @@ def browser():
 @pytest.fixture(autouse=True)
 def clean_database(ui_app):
     with ui_app.app_context():
+        db.session.query(PollVote).delete()
+        db.session.query(PollOption).delete()
+        db.session.query(Poll).delete()
         db.session.query(Comment).delete()
         db.session.query(Post).delete()
         db.session.query(User).delete()
@@ -216,6 +219,38 @@ def test_user_can_register_create_post_and_comment(browser, live_server):
     set_field_value(browser, comment_form.find_element(By.NAME, "body"), "First UI comment")
     submit_form(browser, comment_form)
     wait_for_text(browser, "First UI comment")
+
+
+@pytest.mark.ui
+def test_user_can_create_poll_and_vote(browser, live_server):
+    register_via_ui(browser, live_server, "alice")
+
+    composer = browser.find_element(By.CSS_SELECTOR, "form.composer")
+    poll_kind = composer.find_element(By.CSS_SELECTOR, '[data-post-kind-input][value="poll"]')
+    poll_kind.click()
+    WebDriverWait(browser, 5).until(
+        lambda _: composer.find_element(By.CSS_SELECTOR, "[data-poll-options]").is_displayed()
+    )
+
+    set_field_value(browser, composer.find_element(By.NAME, "body"), "Favorite season?")
+    set_field_value(browser, composer.find_element(By.NAME, "option_1"), "Spring")
+    set_field_value(browser, composer.find_element(By.NAME, "option_2"), "Winter")
+    submit_form(browser, composer)
+    wait_for_text(browser, "Favorite season?")
+    wait_for_text(browser, "Spring")
+
+    logout_via_ui(browser)
+    register_via_ui(browser, live_server, "bob")
+
+    browser.get(f"{live_server}/explore")
+    wait_for_text(browser, "Favorite season?")
+    vote_button = browser.find_element(By.CSS_SELECTOR, ".poll-vote-button")
+    submit_form(browser, vote_button.find_element(By.XPATH, "./ancestor::form"))
+
+    WebDriverWait(browser, 5).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, ".poll-bar-fill"))
+    )
+    assert "100%" in browser.find_element(By.TAG_NAME, "body").text
 
 
 @pytest.mark.ui

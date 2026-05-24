@@ -9,7 +9,7 @@
       <span class="muted">{{ content.created_at.strftime("%Y-%m-%d %H:%M") }}</span>
     </div>
   </header>
-  {% if content.body %}
+  {% if content.body and (not content.poll or content.body != "Poll") %}
     <p class="post-body">{{ content.body }}</p>
   {% endif %}
   {% if content.media_filename %}
@@ -18,6 +18,38 @@
     {% elif content.media_type == "video" %}
       <video class="post-media" controls src="{{ media_url(content.media_filename) }}"></video>
     {% endif %}
+  {% endif %}
+  {% if content.poll %}
+    {% set rows = poll_stats[content.id] if poll_stats is defined and content.id in poll_stats else [] %}
+    <div class="poll-block">
+      {% for row in rows %}
+        <div class="poll-option-row">
+          {% if row.show_results %}
+            <div class="poll-result">
+              <div class="poll-result-label">
+                <span>{{ row.option.label }}</span>
+                <span class="poll-result-meta">{{ row.count }} · {{ row.percentage }}%</span>
+              </div>
+              <div
+                class="poll-bar"
+                role="progressbar"
+                aria-valuenow="{{ row.percentage }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-label="{{ row.option.label }}"
+              >
+                <span class="poll-bar-fill{% if row.is_selected %} is-selected{% endif %}" style="width: {{ row.percentage }}%;"></span>
+              </div>
+            </div>
+          {% else %}
+            <form method="post" action="{{ url_for('social.vote_post', post_id=content.id) }}" class="poll-vote-form">
+              <input type="hidden" name="option_id" value="{{ row.option.id }}">
+              <button type="submit" class="poll-vote-button">{{ row.option.label }}</button>
+            </form>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
   {% endif %}
   <footer class="post-actions">
     <a href="{{ url_for('social.post_detail', post_id=content.id) }}">{{ comment_counts[content.id] if comment_counts is defined and content.id in comment_counts else content.comments.count() }} comments</a>

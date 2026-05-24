@@ -10,7 +10,10 @@ A small Twitter-like social media app built with Flask.
 - Comment on posts.
 - Follow and unfollow users.
 - View a personalized feed from yourself and people you follow.
+- Create poll posts with 2–4 options and live vote percentages after voting.
 - Media uploads with extension-based image/video validation.
+
+Poll post database design: [docs/poll-database-design.md](docs/poll-database-design.md).
 
 ## Setup
 
