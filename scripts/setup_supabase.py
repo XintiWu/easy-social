@@ -1,15 +1,22 @@
 from __future__ import annotations
 
 import os
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from easy_social import create_app
 from easy_social.extensions import db
+
+from migrate_poll_schema import migrate_poll_schema
 
 
 def main() -> None:
     app = create_app()
     with app.app_context():
         db.create_all()
+        migrate_poll_schema()
 
         if app.config.get("MEDIA_STORAGE_BACKEND") != "supabase":
             print("Initialized database. Set MEDIA_STORAGE_BACKEND=supabase to create a bucket.")
