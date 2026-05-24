@@ -80,7 +80,21 @@
     });
   }
 
+  function setupCaptchaRefresh() {
+    const image = document.getElementById("captcha-image");
+    const refresh = document.getElementById("captcha-refresh");
+    if (!image || !refresh) {
+      return;
+    }
+
+    refresh.addEventListener("click", function () {
+      const baseUrl = image.getAttribute("src").split("?")[0];
+      image.src = `${baseUrl}?t=${Date.now()}`;
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll("form.composer").forEach(setupComposer);
+    setupCaptchaRefresh();
   });
 })();
